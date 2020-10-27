@@ -36,6 +36,10 @@ fn get_distance(world: &World, path: &Path) -> usize {
     distance + world[path[0]][path[path.len()-1]]
 }
 
+fn get_fitness(world: &World, path: &Path) -> i32 {
+    -(get_distance(world, path) as i32)
+}
+
 fn swap(path: &mut Path, x: usize, y: usize) {
     let tmp = path[x];
     path[x] = path[y];
@@ -50,16 +54,16 @@ fn swap_random(path: &mut Path) -> (usize, usize) {
 }
 
 fn optimize(world: &World, path: &mut Path) {
-    let mut distance = get_distance(world, path);
+    let mut fitness = get_fitness(world, path);
     for i in 0..100000 {
         let (x, y) = swap_random(path);
-        let new_distance = get_distance(world, path);
-        if new_distance < distance {
-            distance = new_distance;
-            println!("Iteration: {}  Distance: {}  Reise: {:?}", i, distance, path);
+        let new_fitness = get_fitness(world, path);
+        if new_fitness > fitness {
+            fitness = new_fitness;
+            println!("Iteration: {}  Distance: {}  Reise: {:?}", i, get_distance(world, path), path);
         } else {
             swap(path, x, y);
         }
     }
-    println!("(Ergebnis) Distance: {}  Reise: {:?}", distance, path);
+    println!("(Ergebnis) Distance: {}  Reise: {:?}", get_distance(world, path), path);
 }

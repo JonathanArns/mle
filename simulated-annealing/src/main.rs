@@ -36,6 +36,10 @@ fn get_distance(world: &World, path: &Path) -> usize {
     distance + world[path[0]][path[path.len()-1]]
 }
 
+fn get_fitness(world: &World, path: &Path) -> i32 {
+    -(get_distance(world, path) as i32)
+}
+
 fn swap(path: &mut Path, x: usize, y: usize) {
     let tmp = path[x];
     path[x] = path[y];
@@ -54,24 +58,24 @@ fn optimize(world: &World, path: &mut Path) {
     let range = rand::distributions::Uniform::new_inclusive(0_f64, 1_f64);
     let epsilon = 0.0001;
     let mut temp = 10.0;
-    let mut distance = get_distance(world, path);
+    let mut fitness = get_fitness(world, path);
     while temp > epsilon {
         let (x, y) = swap_random(path);
-        let new_distance = get_distance(world, path);
-        if new_distance < distance {
-            distance = new_distance;
-            println!("Distance: {}  Reise: {:?}", distance, path);
+        let new_fitness = get_fitness(world, path);
+        if new_fitness > fitness {
+            fitness = new_fitness;
+            println!("Temperature: {}  Distance: {}  Reise: {:?}", temp, get_distance(world, path), path);
         } else {
-            let probability = ((distance as f64 - new_distance as f64)/temp).exp();
-            println!("Probability: {}", probability);
+            let probability = ((new_fitness as f64 - fitness as f64)/temp).exp();
+            println!("Temperature: {}  Probability: {}", temp, probability);
             if range.sample(&mut rng) < probability {
-                distance = new_distance;
-                println!("Distance: {}  Reise: {:?}", distance, path);
+                fitness = new_fitness;
+                println!("Temperature: {}  Distance: {}  Reise: {:?}", temp, get_distance(world, path), path);
             } else {
                 swap(path, x, y);
             }
         }
         temp -= epsilon;
     }
-    println!("(Ergebnis) Distance: {}  Reise: {:?}", distance, path);
+    println!("(Ergebnis) Distance: {}  Reise: {:?}", get_distance(world, path), path);
 }
