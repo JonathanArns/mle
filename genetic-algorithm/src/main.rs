@@ -2,38 +2,45 @@ use rand::prelude::*;
 use std::cmp::Ordering;
 
 fn main() {
-    genetic(1000);
+    genetic();
 }
 
-type Bitstring = u32;
+type Hypothesis = Vec<u32>;
 type Fitness = i32;
-type Hypothesis = (Bitstring, Fitness);
-type Population = Vec<Hypothesis>;
+type Pair = (Hypothesis, Fitness);
+type Population = Vec<Pair>;
+type Sizes = Vec<u32>;
 
-fn init(p: usize) -> (Bitstring, Population) {
+fn init(p: &usize) -> (Sizes, Population) {
     let mut rng = thread_rng();
-    let target = rng.gen();
-    let mut pop = Vec::with_capacity(p);
-    for _ in 0..p {
-        let hypothesis = rng.gen();
-        pop.push((hypothesis, fitness(target, hypothesis)));
+    let mut pop = Vec::with_capacity(*p);
+    let mut sizes = Vec::with_capacity(100);
+    for _ in 0..100 {
+        sizes.push(rng.gen_range(1, 11));
     }
-    (target, pop)
+    for _ in 0..*p {
+        let mut hypothesis = Vec::with_capacity(100);
+        for _ in 0..100 {
+            hypothesis.push(rng.gen_range(0, 2));
+        }
+        let f = fitness(&sizes, &hypothesis);
+        pop.push((hypothesis, f));
+
+    }
+    (sizes, pop)
 }
 
-fn fitness(target: Bitstring, actual: Bitstring) -> Fitness {
-    let mut count = 0;
-    for i in 0..32 {
-        if (target >> i) & 1 == (actual >> i) & 1 {
-            count += 1;
-        }
+fn fitness(sizes: &Sizes, hypothesis: &Hypothesis) -> Fitness {
+    let mut sum = 0;
+    for i in 0..hypothesis.len() {
+        sum += hypothesis[i] * sizes[i];
     }
-    count
+    -((100_i32 - sum as i32).abs())
 }
 
 fn compare_hypos<'l, 'r>(
-    left: &'l Hypothesis,
-    right: &'r Hypothesis,
+    left: &'l Pair,
+    right: &'r Pair,
 ) -> Ordering {
     if left.1 < right.1 {
         Ordering::Less
@@ -61,38 +68,43 @@ fn select_index(
     i
 }
 
-fn crossover(left: &Bitstring, right: &Bitstring) -> (Bitstring, Bitstring) {
-    let mask = 0x_ffff0000_u32;
-    let l = (left & mask) ^ (right & !mask);
-    let r = (right & mask) ^ (left & !mask);
+fn crossover(left: &Hypothesis, right: &Hypothesis) -> (Hypothesis, Hypothesis) {
+    let len = left.len();
+    let middle = len / 2;
+    let mut l = left[0..middle].to_vec();
+    l.append(&mut right.to_owned()[middle..len].to_vec());
+    let mut r = right[0..middle].to_vec();
+    r.append(&mut left.to_owned()[middle..len].to_vec());
     (l, r)
 }
 
-fn genetic(p: usize) {
-    let r = 0.3;
-    let m = p / 3;
-    let fitness_threshold = 32;
+fn genetic() {
+    let p = 10;
+    let r = 0.5;
+    let m = p / 5;
     let zero_to_one = rand::distributions::Uniform::new_inclusive(0_f64, 1_f64);
     let zero_to_p = rand::distributions::Uniform::new(0, p);
     let mut rng = thread_rng();
-    let (target, mut population) = init(p);
+    let (sizes , mut population) = init(&p);
     population.sort_by(compare_hypos);
 
-    while population.last().unwrap().1 < fitness_threshold {
-        println!("{:?}", population.last().unwrap());
+    for generation in 0..50 {
+        let fittest = population.last().unwrap().clone();
+        println!("Generation: {}, Highest fitness: {}", generation, fittest.1);
         let mut next_pop = Vec::with_capacity(p);
         let sum_fitness = population.iter().fold(0, |x, y| x + y.1);
         // selection
-        let mut intersect = ((1_f64 - r) as usize) * p;
+        next_pop.push(fittest);  // always keep fittest individual
+        let mut intersect = ((1_f64 - r) * p as f64) as usize;
         intersect += (p - intersect) % 2;  // because crossover cannot deal with an odd amount of hypos
-        for _ in 0..intersect {
+        for _ in 0..intersect-1 {
             let i = select_index(
                 &population,
                 &sum_fitness,
                 &zero_to_one.sample(&mut rng),
                 &zero_to_p.sample(&mut rng),
             );
-            next_pop.push(population[i]);
+            next_pop.push(population[i].clone());
         }
 
         // crossover
@@ -110,20 +122,22 @@ fn genetic(p: usize) {
                 &zero_to_p.sample(&mut rng),
             );
             let cross = crossover(&population[i].0, &population[j].0);
-            next_pop.push((cross.0, fitness(target, cross.0)));
-            next_pop.push((cross.1, fitness(target, cross.1)));
+            let (f0, f1) = (fitness(&sizes, &cross.0), fitness(&sizes, &cross.1));
+            next_pop.push((cross.0, f0));
+            next_pop.push((cross.1, f1));
         }
 
         // mutation
         for _ in 0..m {
-            let i = zero_to_p.sample(&mut rng);
-            let old = next_pop.remove(i);
-            let mutated = old.0 ^ (1_u32 << rng.gen_range(0_u32 , 32_u32 ));
-            next_pop.push((mutated, fitness(target, mutated)));
+            let i = rng.gen_range(1, p);
+            let j = rng.gen_range(0, 100); 
+            next_pop[i].0[j] = next_pop[i].0[j] ^ 1;
+            next_pop[i].1 = fitness(&sizes, &next_pop[i].0);
         }
 
         // update
         population = next_pop;
         population.sort_by(compare_hypos);
     }
+    println!("Result: {:?}", population.last().unwrap().0);
 }
