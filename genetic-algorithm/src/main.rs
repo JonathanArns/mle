@@ -6,7 +6,7 @@ fn main() {
 }
 
 type Hypothesis = Vec<u32>;
-type Fitness = i32;
+type Fitness = f64;
 type Pair = (Hypothesis, Fitness);
 type Population = Vec<Pair>;
 type Sizes = Vec<u32>;
@@ -35,7 +35,15 @@ fn fitness(sizes: &Sizes, hypothesis: &Hypothesis) -> Fitness {
     for i in 0..hypothesis.len() {
         sum += hypothesis[i] * sizes[i];
     }
-    -((100_i32 - sum as i32).abs())
+    (-0.001 * (100f64 - sum as f64).powi(2)).exp()
+}
+
+fn how_close(sizes: &Sizes, hypothesis: &Hypothesis) -> i32 {
+    let mut sum = 0;
+    for i in 0..hypothesis.len() {
+        sum += hypothesis[i] * sizes[i];
+    }
+    (100i32 - sum as i32).abs()
 }
 
 fn compare_hypos<'l, 'r>(
@@ -53,11 +61,11 @@ fn compare_hypos<'l, 'r>(
 
 fn select_index(
     population: &Population,
-    sum_fitness: &i32,
+    sum_fitness: &Fitness,
     rand_num: &f64,
     rand_index: &usize,
 ) -> usize {
-    let mut sum = 0_f64;
+    let mut sum = 0f64;
     let mut i = *rand_index;
     let p = population.len();
     while sum < *rand_num {
@@ -90,9 +98,9 @@ fn genetic() {
 
     for generation in 0..50 {
         let fittest = population.last().unwrap().clone();
-        println!("Generation: {}, Highest fitness: {}", generation, fittest.1);
+        println!("Generation: {}, Off by {} Liters, Highest fitness: {}", generation, how_close(&sizes, &fittest.0), fittest.1);
         let mut next_pop = Vec::with_capacity(p);
-        let sum_fitness = population.iter().fold(0, |x, y| x + y.1);
+        let sum_fitness = population.iter().fold(0f64, |x, y| x + y.1);
         // selection
         next_pop.push(fittest);  // always keep fittest individual
         let mut intersect = ((1_f64 - r) * p as f64) as usize;
