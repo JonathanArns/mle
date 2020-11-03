@@ -87,16 +87,16 @@ fn crossover(left: &Hypothesis, right: &Hypothesis) -> (Hypothesis, Hypothesis) 
 }
 
 fn genetic() {
-    let p = 10;
-    let r = 0.5;
-    let m = p / 5;
+    let p = 1000;
+    let r = 0.9;
+    let m = p / 1;
     let zero_to_one = rand::distributions::Uniform::new_inclusive(0_f64, 1_f64);
     let zero_to_p = rand::distributions::Uniform::new(0, p);
     let mut rng = thread_rng();
     let (sizes , mut population) = init(&p);
     population.sort_by(compare_hypos);
 
-    for generation in 0..50 {
+    for generation in 0..10 {
         let fittest = population.last().unwrap().clone();
         println!("Generation: {}, Off by {} Liters, Highest fitness: {}", generation, how_close(&sizes, &fittest.0), fittest.1);
         let mut next_pop = Vec::with_capacity(p);
