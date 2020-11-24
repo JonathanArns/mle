@@ -43,6 +43,17 @@ class GameGL(object):
     def toCString(self, string):
         return bytes(string, "ascii")
 
+def get_state(xBall, yBall, xSchlaeger, xV, yV):
+    if xV == -1:
+        xv = 0
+    else:
+        xv = 1
+    if yV == -1:
+        yv = 0
+    else:
+        yv = 1
+    return ((((xBall * 9) + yBall) * 7 + xSchlaeger) * 2 + xv) * 2 + yv 
+    
 class BasicGame(GameGL):
 
     windowName = "PingPong"
@@ -56,10 +67,10 @@ class BasicGame(GameGL):
     yV         = 1
     score      = 0
 
-    learn_rate = 0.8
-    discount = 0.3
+    learn_rate = 0.5
+    discount = 0.8
     
-    def __init__(self, name, width = 360, height = 360):
+    def __init__(self, name, width = 300, height = 270):
         super
         self.windowName = name
         self.width      = width
@@ -70,19 +81,9 @@ class BasicGame(GameGL):
         if key == b'\x1b':
             sys.exit(0)
     
-    def get_state(self):
-        if self.xV == -1:
-            xv = 0
-        else:
-            xv = 1
-        if self.yV == -1:
-            yv = 0
-        else:
-            yv = 1
-        return ((((self.xBall * 12) + self.yBall) * 12 + self.xSchlaeger) * 2 + xv) * 2 + yv 
-    
     def init(self):
-        self.Q = [[random.uniform(0, 1) for _ in range(2)] for _ in range(6904)]
+        self.Q = [[random.uniform(0, 1) for _ in range(2)] for _ in range(get_state(9,8,6,1,1))]
+        self.s = get_state(self.xBall, self.yBall, self.xSchlaeger, self.xV, self.yV)
 
     def display(self):
         # clear the screen
@@ -98,8 +99,7 @@ class BasicGame(GameGL):
 
 
 
-        s = self.get_state()
-        a = self.Q[s].index(max(self.Q[s])) # choose action a
+        a = self.Q[self.s].index(max(self.Q[self.s])) # choose action a
 
         if a == 0:
             self.xSchlaeger -= 1
@@ -108,23 +108,24 @@ class BasicGame(GameGL):
         # don't allow puncher to leave the pitch
         if self.xSchlaeger < 0:
             self.xSchlaeger = 0
-        if self.xSchlaeger > 9:
-            self.xSchlaeger = 9
+        if self.xSchlaeger > 6:
+            self.xSchlaeger = 6
         
 
         self.xBall += self.xV
         self.yBall += self.yV
         # change direction of ball if it's at wall
-        if (self.xBall > 10 or self.xBall < 1):
+        if (self.xBall > 8 or self.xBall < 1):
             self.xV = -self.xV
-        if (self.yBall > 10 or self.yBall < 1):
+        if (self.yBall > 7 or self.yBall < 1):
             self.yV = -self.yV
         # check whether ball on bottom line
         if self.yBall == 0:
             # check whether ball is at position of player
             if (self.xSchlaeger == self.xBall 
                 or self.xSchlaeger == self.xBall -1
-                or self.xSchlaeger == self.xBall -2):
+                or self.xSchlaeger == self.xBall -2
+                or self.xSchlaeger == self.xBall -3):
                 print("positive reward")
                 r = 1
             else:
@@ -134,8 +135,8 @@ class BasicGame(GameGL):
             r = 0
 
 
-        s_next = self.get_state()
-        self.Q[s][a] += self.learn_rate * (r + self.discount * max(self.Q[s_next]) - self.Q[s][a])
+        s_next = get_state(self.xBall, self.yBall, self.xSchlaeger, self.xV, self.yV)
+        self.Q[self.s][a] += self.learn_rate * (r + self.discount * max(self.Q[s_next]) - self.Q[self.s][a])
         self.s = s_next
 
 
@@ -189,7 +190,7 @@ class BasicGame(GameGL):
         glVertex2f(xPos, yPos + (self.pixelSize * height))
         glEnd()
     
-    def drawComputer(self, width = 3, height = 1, x = 0, y = 0, color = (1.0, 0.0, 0.0)):
+    def drawComputer(self, width = 4, height = 1, x = 0, y = 0, color = (1.0, 0.0, 0.0)):
         x = self.xSchlaeger
         xPos = x * self.pixelSize
         # set a bit away from bottom
