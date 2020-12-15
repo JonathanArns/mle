@@ -68,8 +68,8 @@ class BasicGame(GameGL):
     yV         = 1
     score      = 0
 
-    learn_rate = 0.5
-    discount = 0.8
+    learn_rate = 0.9
+    discount = 0.1
     
     def __init__(self, name, width = 300, height = 270):
         super
@@ -83,36 +83,22 @@ class BasicGame(GameGL):
             sys.exit(0)
     
     def init(self):
-        self.Q = [[random.uniform(0, 1) for _ in range(2)] for _ in range(get_state(9,8,6,1,1))]
+        self.Q = [[random.uniform(0, 1) for _ in range(3)] for _ in range(get_state(9,8,6,1,1))]
         self.s = get_state(self.xBall, self.yBall, self.xSchlaeger, self.xV, self.yV)
-
-    def display(self):
-        # clear the screen
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        # reset position
-        glLoadIdentity()
-        glViewport(0, 0, self.width, self.height)
-        glMatrixMode(GL_PROJECTION)
-        glLoadIdentity()
-        glOrtho(0.0, self.width, 0.0, self.height, 0.0, 1.0)
-        glMatrixMode (GL_MODELVIEW)
-        glLoadIdentity()
-
-
-
+    
+    def game_step(self):
         a = self.Q[self.s].index(max(self.Q[self.s])) # choose action a
 
-        if a == 0:
-            self.xSchlaeger -= 1
-        else:
+        if a == 1:
             self.xSchlaeger += 1
+        elif a == 2:
+            self.xSchlaeger -= 1
         # don't allow puncher to leave the pitch
         if self.xSchlaeger < 0:
             self.xSchlaeger = 0
         if self.xSchlaeger > 6:
             self.xSchlaeger = 6
         
-
         self.xBall += self.xV
         self.yBall += self.yV
         # change direction of ball if it's at wall
@@ -127,46 +113,67 @@ class BasicGame(GameGL):
                 or self.xSchlaeger == self.xBall -1
                 or self.xSchlaeger == self.xBall -2
                 or self.xSchlaeger == self.xBall -3):
-                print("positive reward")
+                # print("positive reward")
                 r = 1
             else:
-                print("negative reward")
+                # print("negative reward")
+                if not self.learning:
+                    print("You Lost!")
+                    glutDestroyWindow(self.window)
+                    return
                 r = -1
         else:
             r = 0
-
 
         s_next = get_state(self.xBall, self.yBall, self.xSchlaeger, self.xV, self.yV)
         self.Q[self.s][a] += self.learn_rate * (r + self.discount * max(self.Q[s_next]) - self.Q[self.s][a])
         self.s = s_next
 
+    def learn(self):
+        self.learning = True
+        for _ in range(1000000):
+            self.game_step()
+        self.learning = False
 
+    def display(self):
+        # clear the screen
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        # reset position
+        glLoadIdentity()
+        glViewport(0, 0, self.width, self.height)
+        glMatrixMode(GL_PROJECTION)
+        glLoadIdentity()
+        glOrtho(0.0, self.width, 0.0, self.height, 0.0, 1.0)
+        glMatrixMode (GL_MODELVIEW)
+        glLoadIdentity()
+
+        self.game_step()
         
         # repaint
         self.drawBall()
         self.drawComputer()
         
         # timeout
-        time.sleep(0.001)
-        
+        time.sleep(0.05)
+
         glutSwapBuffers()
     
     def start(self):
+        self.init()
+        print("learning...")
+        self.learn()
+        print("done")
+
         glutInit()
         glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_ALPHA | GLUT_DEPTH)
         glutInitWindowSize(self.width, self.height)
         glutInitWindowPosition(100, 100)
-        glutCreateWindow(self.toCString(self.windowName))
-        self.init()
+        self.window = glutCreateWindow(self.toCString(self.windowName))
         glutDisplayFunc(self.display)
         glutReshapeFunc(self.onResize)
         glutIdleFunc(self.display)
         glutKeyboardFunc(self.keyboard)
         glutMainLoop() 
-    
-    def updateSize(self):
-        self.width  = glutGet(GLUT_WINDOW_WIDTH)
-        self.height = glutGet(GLUT_WINDOW_HEIGHT)
     
     def onResize(self, width, height):
         self.width  = width
