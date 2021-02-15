@@ -1,2 +1,15 @@
 target/
 .vscode/
+temp/
+result/
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.xml
+*.gz
+*.toc
