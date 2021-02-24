@@ -1,0 +1,3 @@
+biber transformer
+pdflatex transformer -interaction=nonstopmode
+pdflatex transformer -interaction=nonstopmode
