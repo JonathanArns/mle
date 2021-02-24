@@ -67,16 +67,26 @@ Der Decoder (rechts) besteht auch aus einer Reihe von N identischen Modulen, jed
 \section{Attention}
 
 \begin{figure}[htbp]
+\centerline{\includegraphics{img/scaled_dotproduct_attention.png}}
+\caption{Scaled dotproduct attention \cite{attention_is_all_you_need}}
+\label{fig}
+\end{figure}
+
+\begin{equation}
+    Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_K}})V
+\end{equation}
+
+\begin{figure}[htbp]
 \centerline{\includegraphics{img/multi_head_attention.png}}
 \caption{Multi-Head Attention \cite{attention_is_all_you_need}}
 \label{fig}
 \end{figure}
 
-\begin{figure}[htbp]
-\centerline{\includegraphics{img/scaled_dotproduct_attention.png}}
-\caption{Scaled dotproduct attention \cite{attention_is_all_you_need}}
-\label{fig}
-\end{figure}
+\begin{eqnarray}
+    MultiHead(Q,K,V) = Concat(head_1,...,head_h)W^O \\
+    \text{mit} \; head_i = Attention(QW_i^Q , KW_i^K , VW_i^V)
+\end{eqnarray}
+
 
 \begin{figure}[htbp]
 \centerline{\includegraphics{img/attention_visualized.png}}
