@@ -54,24 +54,14 @@ Dieses Problem wird mittels Sequence to Sequence (Seq2Seq) Learning gelöst, mit
 Die meisten Seq2Seq Modelle bestehen aus einem Encoder und einem Decoder \cite{attention_is_all_you_need}. Der Encoder codiert die Eingabe Sequenz in einer höher-dimensionale Vektorrepräsentation, die dann vom Decoder in eine Ausgabe Sequenz umgewandelt wird. Die Encoder und Decoder selbst sind in der Regel RNNs, beispielsweise mit der LSTM Architektur.
 
 
-\section{Modell Architektur}
-Fig. 1 zeigt die Architektur des Transformers.
-
-\begin{figure}[htbp]
-\centerline{\includegraphics{img/figure1.png}}
-\caption{Der Encoder (links) besteht aus einer Reihe von N identischen Schichten mit jeweils zwei Unterschichten. Die Eingaben einer Encoder Schicht fließen zuerst durch eine self-attention Schicht und dann durch ein feed-forward Netz. \\
-Der Decoder (rechts) besteht auch aus einer Reihe von N identischen Schichten, jedoch mit jeweils drei Unterschichten. Die erste ist ebenfalls eine self-attention Schicht, deren Eingaben allerdings maskiert werden, um ... . Danach kommt eine Encoder-Decoder attention Schicht, die als Eingaben die Ausgaben des Decoders, sowie die Ausgaben der zuvor liegenden self-attention Schicht erhält. Zuletzt liegt wie beim Encoder ein feed-forward Netz. \\
-Die attention Schichten haben jeweils eigene Gewichte, während das feed-forward Netz für alle Schichten komplett identisch ist. \cite{attention_is_all_you_need}}
-\label{fig:1}
-\end{figure}
-
 
 \section{Attention}
-Attention ist der wichtigste Mechanismus des Transformers. Attention erlaubt dem Transformer beispielsweise, Sätze nicht nur Wort für Wort zu übersetzen, sondern Zusammenhänge zu erkennen und grammatikalisch korrekte Sätze zu bilden. Abstrakt ist eine Attention Funktion eine Abbildung von einer Query und einer Menge von Key-Value Paaren zu einer Ausgabe. In einem Übersetzungskontext könnte das Wort, welches gerade übersetzt werden soll, die Query sein und alle Wörter in dem zu übersetzenden Satz die Keys und Values. Das Ergebnis signalisiert dann, welche Wörter bei der Übersetzung der Query zusätzlich besonders in betracht gezogen werden. Diese spezielle Konstellation, in der die Query, Keys und Values aus der gleichen Sequenz stammen, nennt sich Self-Attention. Diese kommt auch im Transformer zum Einsatz.
-
-% Formal hat die Abbildung die Form $\mathbb{N}^{d_q} \times \mathbb{N}^{d_k} \times \mathbb{N}^{d_k} \rightarrow \mathbb{R}^{d_model}$ Die Query, Keys, Values und die Ausgabe sind 
-
-% Im folgenden betrachten wir erst die Funktionsweise von Attention abstrahiert über einzelne Vektoren pro Element. In der Praxis passiert diese Berechnung zusammengefasst in Matrizen.
+Attention ist der wichtigste Mechanismus des Transformers. Attention erlaubt dem Transformer beispielsweise, Sätze nicht nur Wort für Wort zu übersetzen, sondern Zusammenhänge zu erkennen und grammatikalisch korrekte Sätze zu bilden. Abstrakt ist eine Attention Funktion eine Abbildung von einer Query und einer Menge von Key-Value Paaren zu einer Ausgabe. In einem Übersetzungskontext könnte das Wort, welches gerade übersetzt werden soll, die Query sein und alle Wörter in dem zu übersetzenden Satz die Keys und Values. Das Ergebnis signalisiert dann, welche Wörter bei der Übersetzung der Query zusätzlich besonders in betracht gezogen werden. Diese spezielle Konstellation, in der die Query, Keys und Values aus der gleichen Sequenz stammen, nennt sich Self-Attention. Diese kommt auch im Transformer zum Einsatz und ist beispielhaft in Abb. \ref{fig:4} visualisiert.
+\begin{figure}[htbp]
+\centerline{\includegraphics{img/attention_visualized.png}}
+\caption{Visualisierung von Self-Attention in GPT-2. Verbindungen von der Query (grau hinterlegt) zu den Keys zeigen Attention, dunklere Verbindungen sind höher gewichtet. Hier ist sichtbar, wie mittels Attention Referenzen auf frühere Wörter erkannt werden können. \cite{visualization_of_attention}}
+\label{fig:4}
+\end{figure}
 
 \subsection{Scaled dotproduct attention}
 Es gibt grundlegend zwei verschiedene Attention Funktionen, additive Attention und dot-product Attention. Der Transformer verwendet dot-product Attention, da diese trotz gleicher theoretischer Komplexität in der Praxis aufgrund von hoch optimiertem Matix-Multiplikations Code deutlich schneller ist. Abb. \ref{fig:2} zeigt den Aufbau eines scaled dot-product attention Moduls im Transformer. Die Berechnung der Attention Matrix erfolgt mit folgender Formel:
@@ -115,16 +105,38 @@ Wobei die Projektionen mit $W_i^Q \in \mathbb{R}^{d_{model} \times d_k}$, $W_i^K
 
 Yin et al. \cite{attention_is_all_you_need} verwenden in ihrem Modell $h = 8$ und $d_k = d_v = \frac{d_{model}}{h}$, somit haben sie 8 kleinere Attention Heads bei ähnlichem Rechenaufwand im Vergleich zu einem $d_{model}$-dimensionalen Single-Head Attention Modul.
 
+\subsection{Attention Beispiel}
+% TODO
 
+
+\section{Modell Architektur}
+Fig. \ref{fig:1} zeigt die Architektur des Transformers. Der Transformer ist auto-regressiv, das bedeutet, dass jedes generierte Element der Ausgabe Sequenz ebenfalls als Eingabe Verwendet wird, um das nächste Element zu generieren \cite{attention_is_all_you_need}. Um eine vollständige Ausgabe zu erzeugen muss der Transformer also mehrfach ausgeführt werden.
+% Im Folgenden wird weiter auf die wichtigsten Bestandteile der Transformer Architektur eingegangen.
 \begin{figure}[htbp]
-\centerline{\includegraphics{img/attention_visualized.png}}
-\caption{Visualisierung von Self-Attention in GPT-2. Verbindungen von der Query (grau hinterlegt) zu den Keys zeigen Attention, dunklere Verbindungen sind höher gewichtet. \cite{visualization_of_attention}}
-\label{fig:4}
+\centerline{\includegraphics{img/figure1.png}}
+\caption{Der Encoder (links) besteht aus einer Reihe von N identischen Schichten mit jeweils zwei Unterschichten. Die Eingaben einer Encoder Schicht fließen zuerst durch eine self-attention Schicht und dann durch ein feed-forward Netz. \\
+Der Decoder (rechts) besteht auch aus einer Reihe von N identischen Schichten, jedoch mit jeweils drei Unterschichten. Die erste ist ebenfalls eine self-attention Schicht, deren Eingaben allerdings maskiert werden, um dem Modell keine Eingaben zu zeigen, die es nicht sehen sollte. Danach kommt eine Encoder-Decoder attention Schicht, die als Keys und Values die Ausgaben des Decoders und als Queries die Ausgaben der zuvor liegenden self-attention Schicht erhält. Zuletzt liegt wie beim Encoder ein feed-forward Netz. \\
+Nach jeder Attention und feed-forward Schicht wird die Summe dessen Ausgaben und Eingaben zusammen normalisiert. Die normalisierten Werte dienen jeweils als Eingabe für die nächste Schicht. \\
+Im NLP Anwendungen müssen die Eingaben für das Modell als erstes in Vektoren eingebettet werden. Da in Seq2Seq Modellen die Reihenfolge der Eingaben eine Rolle spielt, das Modell die Eingaben aber alle gemeinsam erhält, muss außerdem für jedes Element die Position in der Eingabe codiert werden. Der Transformer generiert für jedes Element einen Vektor, der dessen Position codiert, dazu stehen verschiedene Algorithmen, sowohl fix, als auch trainierbar, zur Verfügung. \\
+Um ein Ergebnis zu erhalten, werden die Ausgaben des Decoders in einen Logit-Vektor transformiert und mit der Softmax Funktion normalisiert. Der erzeugte Vektor enthält für jedes Element des Ausgabealphabets die Wahrscheinlichkeit, dass es das nächste Element in der Ausgabe Sequenz ist. \cite{attention_is_all_you_need}}
+\label{fig:1}
 \end{figure}
+
+\subsection{Anwendungen von Attention}
+Der Transformer verwendet den Attention Mechanismus auf drei verschiedene Arten.
+\subsubsection{Encoder Self-Attention}
+In Self-Attention Schichten werden die gleichen Werte als Keys, Values und Queries verwendet. Durch die Self-Attention Schichten können für jedes Element im Encoder Abhängigkeiten zu jedem Element der Eingabe, beziehungsweise der Ausgabe der vorherigen Encoder Schicht, dargestellt werden.
+\subsubsection{Decoder Self-Attention}
+Durch die Self-Attention Schichten im Decoder können für jedes Element im Decoder ebenfalls Abhängigkeiten zu jedem Element der Ausgabe bis hin zum aktuellen Element dargestellt werden. Verbindungen zu Elementen nach dem jeweiligen Element sind nicht erlaubt, damit Ausgaben tatsächlich nur auf der Eingabe und bereits generierten Elementen basieren. Unerlaubte Verbindung werden durch eine Maskierung von Werten in der Attention Funktion verhindert.
+\subsubsection{Encoder-Decoder Attention}
+Die Keys und Values der Encoder-Decoder Attention Schichten im Decoder sind die Ausgaben des Encoders. Als Queries werden jeweils die Ausgaben der zuvor liegenden Self-Attention Schicht im Decoder verwendet. Damit können Abhängigkeiten von jedem Element im Decoder zu jedem Element der Encoder Ausgabe dargestellt werden. Hier besteht also die Schnittstelle vom Encoder zum Decoder und entsprechend die Beziehung zwischen den Eingabe und Ausgabe Sequenzen.
+
+\subsection{Feed-Forward Netze}
 
 
 \section{Training}
 Die Modell Parameter werden zufällig initialisiert.
+
 
 \section{Fazit}
 Das ist ein Fazit
