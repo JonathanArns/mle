@@ -55,47 +55,76 @@ Die meisten Seq2Seq Modelle bestehen aus einem Encoder und einem Decoder \cite{a
 
 
 \section{Modell Architektur}
+Fig. 1 zeigt die Architektur des Transformers.
 
 \begin{figure}[htbp]
 \centerline{\includegraphics{img/figure1.png}}
-\caption{Der Encoder (links) besteht aus einer Reihe von N identischen Modulen mit jeweils zwei Untermodulen. \\
-Der Decoder (rechts) besteht auch aus einer Reihe von N identischen Modulen, jedoch mit jeweils drei Untermodulen. Die erste Schicht ist eine Multi-Head Attention Layer \cite{attention_is_all_you_need}}
-\label{fig}
+\caption{Der Encoder (links) besteht aus einer Reihe von N identischen Schichten mit jeweils zwei Unterschichten. Die Eingaben einer Encoder Schicht fließen zuerst durch eine self-attention Schicht und dann durch ein feed-forward Netz. \\
+Der Decoder (rechts) besteht auch aus einer Reihe von N identischen Schichten, jedoch mit jeweils drei Unterschichten. Die erste ist ebenfalls eine self-attention Schicht, deren Eingaben allerdings maskiert werden, um ... . Danach kommt eine Encoder-Decoder attention Schicht, die als Eingaben die Ausgaben des Decoders, sowie die Ausgaben der zuvor liegenden self-attention Schicht erhält. Zuletzt liegt wie beim Encoder ein feed-forward Netz. \\
+Die attention Schichten haben jeweils eigene Gewichte, während das feed-forward Netz für alle Schichten komplett identisch ist. \cite{attention_is_all_you_need}}
+\label{fig:1}
 \end{figure}
 
 
 \section{Attention}
+Attention ist der wichtigste Mechanismus des Transformers. Attention erlaubt dem Transformer beispielsweise, Sätze nicht nur Wort für Wort zu übersetzen, sondern Zusammenhänge zu erkennen und grammatikalisch korrekte Sätze zu bilden. Abstrakt ist eine Attention Funktion eine Abbildung von einer Query und einer Menge von Key-Value Paaren zu einer Ausgabe. In einem Übersetzungskontext könnte das Wort, welches gerade übersetzt werden soll, die Query sein und alle Wörter in dem zu übersetzenden Satz die Keys und Values. Das Ergebnis signalisiert dann, welche Wörter bei der Übersetzung der Query zusätzlich besonders in betracht gezogen werden. Diese spezielle Konstellation, in der die Query, Keys und Values aus der gleichen Sequenz stammen, nennt sich Self-Attention. Diese kommt auch im Transformer zum Einsatz.
+
+% Formal hat die Abbildung die Form $\mathbb{N}^{d_q} \times \mathbb{N}^{d_k} \times \mathbb{N}^{d_k} \rightarrow \mathbb{R}^{d_model}$ Die Query, Keys, Values und die Ausgabe sind 
+
+% Im folgenden betrachten wir erst die Funktionsweise von Attention abstrahiert über einzelne Vektoren pro Element. In der Praxis passiert diese Berechnung zusammengefasst in Matrizen.
+
+\subsection{Scaled dotproduct attention}
+Es gibt grundlegend zwei verschiedene Attention Funktionen, additive Attention und dot-product Attention. Der Transformer verwendet dot-product Attention, da diese trotz gleicher theoretischer Komplexität in der Praxis aufgrund von hoch optimiertem Matix-Multiplikations Code deutlich schneller ist. Abb. \ref{fig:2} zeigt den Aufbau eines scaled dot-product attention Moduls im Transformer. Die Berechnung der Attention Matrix erfolgt mit folgender Formel:
+\begin{equation} \label{eq:attention}
+    Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_K}})V
+\end{equation}
+Dabei ist $Q$ die Matrix der Query Vektoren, $K$ die Matrix der Key Vektoren und $V$ die Matrix der Value Vektoren. $Q$ ist entgegen der Intuition eine Matrix, da die Attention in der Praxis mittels Matrizenoperationen für mehrere Queries auf einmal berechnet wird.
+
+Softmax, die normalisierte Exponentialfunktion, normalisiert alle Elemente eines Vektors auf Werte zwischen $0$ und $1$, so dass die Summe aller Werte $1$ ergibt. Da die Exponentialfunktion verwendet wird, nähert sich das größte Element des Vektors $1$ an, während sich, außer in sehr knappen Fällen, alle anderen Elemente $0$ annähern. Sei $x$ ein Vektor mit den Elementen $x_1 ... x_n$, dann ist Softmax wie folgt definiert. \cite{softmax_to_softassign}
+\begin{equation} \label{eq:softmax}
+    Softmax(x)_j = \frac{e^{\beta x_j}}{\sum_{i = 1}^{n} e^{\beta x_i}}, \beta \in \mathbb{R} \land \beta > 0
+\end{equation}
+Da die Softmax Funktion in der Praxis nicht gut mit sehr großen Werten skaliert, werden die Scores mit der Wurzel der Dimension der Keys $\sqrt{d_k}$ skaliert, bevor Softmax berechnet wird. \cite{attention_is_all_you_need}
 
 \begin{figure}[htbp]
 \centerline{\includegraphics{img/scaled_dotproduct_attention.png}}
-\caption{Scaled dotproduct attention \cite{attention_is_all_you_need}}
-\label{fig}
+\caption{Für die Berechnung der Scaled Dotproduct-Attention werden die Matrizen $Q$, $K$ und $V$ benötigt. Die Queries $Q$ und die Keys $K$ haben die Dimension $d_k$, die Values $V$ haben die Dimension $d_v$. Um die Attention zu berechnen, wird mittels Matrixmultiplikation der Queries mit den transponierten Keys pro Query Vektor ein Score für jeden Key gebildet. Diese Scores werden mit $\sqrt{d_k}$ skaliert und mit einer Softmax Funktion pro Query zu Gewichten für die Values normalisiert. Um die Attention Matrix zu erhalten werden die Values mit den ermittelten Gewichten multipliziert. Vor der Berechnung der Softmax Funktion werden optional Werte maskiert, die noch unerlaubte Verbindungen darstellen. Zu maskierende Werte werden auf $-\infty$ gesetzt. \cite{attention_is_all_you_need}}
+\label{fig:2}
 \end{figure}
 
-\begin{equation}
-    Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_K}})V
-\end{equation}
+% Sei die Eingabe eine Sequenz aus zwei Elementen, die in den Vektoren $x_1$ und $x_2$ ... codiert sind.
+% Jeder Eingabe Vektor wird mit den Matrizen $W^Q$, $W^K$ und $W^V$ multipliziert, um die Query-Vektoren $q_1$ und $q_2$, die Key-Vektoren $k_1$ und $k_2$ und die Value-Vektoren $v_1$ und $v_2$ zu erzeugen. $W^Q$, $W^K$ und $W^V$ sind Gewicht-Matrizen, die zufällig initialisiert und beim Training des Modells erlernt werden.
+% Im zweiten Schritt wird für jedes Element pro Query ein Score berechnet. Dazu wird jeweils das Skalarprodukt des Query-Vektors mit dem einzelnen Key-Vektor berechnet. Die Scores werden Skaliert, indem sie durch die Quadratwurzel der Dimension der Key-Vektoren $\sqrt{d_k}$ dividiert werden. Diese Skalierung wird verwendet, um die Performance der nachfolgenden Softmax Funktion bei sehr großen Eingaben zu verbessern. Aus den skalierten Scores werden mit der Softmax Funktion Gewichte für die Value-Vektoren berechnet. Softmax normalisiert die Eingaben auf Werte zwischen $0$ und $1$ so, dass ihre Summe $1$ ergibt. Die Value-Vektoren werden mit den berechneten Gewichten multipliziert, um das Ergebnis der Attention Funktion zu erhalten.
 
+
+\subsection{Single-Head Attention}
+Bei der Definition der dot-product Attention bis hier her fehlt noch ein essentieller Teil des Attention Mechanismus. Es fehlt jede Art von Parametern, die beim Training des Modells erlernt werden und die den Eingaben eine Gewichtung verleihen. Die Matrizen $Q$, $K$ und $V$, die die Attention Funktion als Eingaben erwartet, sind nicht einfach eine direkte Repräsentation der Eingaben des Modells, sondern gewichtete Projektionen von diesen, die zur Berechnung der Attention gebildet werden. Hierzu werden die Parameter Matrizen $W^Q$, $W^K$ und $W^V$ benötigt, mit denen die Eingaben einer Attention Schicht multipliziert werden. $W^Q$, $W^K$ und $W^V$ werden zufällig initialisiert und beim Training des Modells erlernt. In einem Single-Head Attention Modul haben die Projektionen die Dimension $d_{model}$, die der Dimension der codierten Eingaben des Modells entspricht. \cite{attention_is_all_you_need}
+
+\subsection{Multi-Head Attention}
 \begin{figure}[htbp]
 \centerline{\includegraphics{img/multi_head_attention.png}}
 \caption{Multi-Head Attention \cite{attention_is_all_you_need}}
-\label{fig}
+\label{fig:3}
 \end{figure}
-
-\begin{eqnarray}
+Der Transformer verwendet anstatt Single-Head Attention Multi-Head Attention. Der Unterschied besteht darin, dass es mehrere Parameter Matrizen $W_1^Q$ ... $W_h^Q$, $W_1^K$ ... $W_h^K$ und $W_1^V$ ... $W_h^V$ gibt, mit denen die Eingaben linear projeziert werden. So werden $h$ so genannte Attention Heads gebildet. Die Projektionen haben anstatt $d_{model}$ die Dimensionen $d_k$, $d_k$ und $d_v$, wobei $d_k$ und $d_v$ kleiner sein können, als $d_{model}$. Für jede Projektion wird dann einzeln die Attention berechnet, die Ergebnisse werden concatiniert und mit einer weiteren Parameter Matrix $W^O$ in die $d_{model}$-dimensionale Ausgabe des Multi-Head Attention Moduls projeziert. Dieser Aufbau ist in Abb. \ref{fig:3} dargestellt und entspricht der Formel:
+\begin{eqnarray} \label{eq:multi_head_attention}
     MultiHead(Q,K,V) = Concat(head_1,...,head_h)W^O \\
     \text{mit} \; head_i = Attention(QW_i^Q , KW_i^K , VW_i^V)
 \end{eqnarray}
+Wobei die Projektionen mit $W_i^Q \in \mathbb{R}^{d_{model} \times d_k}$, $W_i^K \in \mathbb{R}^{d_{model} \times d_k}$, $W_i^V \in \mathbb{R}^{d_{model} \times d_v}$ und $W^O \in \mathbb{R}^{hd_v \times d_{model}}$ definiert sind. \cite{attention_is_all_you_need}
+
+Yin et al. \cite{attention_is_all_you_need} verwenden in ihrem Modell $h = 8$ und $d_k = d_v = \frac{d_{model}}{h}$, somit haben sie 8 kleinere Attention Heads bei ähnlichem Rechenaufwand im Vergleich zu einem $d_{model}$-dimensionalen Single-Head Attention Modul.
 
 
 \begin{figure}[htbp]
 \centerline{\includegraphics{img/attention_visualized.png}}
-\caption{Visualization of attention in GTP-2 \cite{visualization_of_attention}}
-\label{fig}
+\caption{Visualisierung von Self-Attention in GPT-2. Verbindungen von der Query (grau hinterlegt) zu den Keys zeigen Attention, dunklere Verbindungen sind höher gewichtet. \cite{visualization_of_attention}}
+\label{fig:4}
 \end{figure}
 
 
 \section{Training}
+Die Modell Parameter werden zufällig initialisiert.
 
 \section{Fazit}
 Das ist ein Fazit
