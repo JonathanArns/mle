@@ -5,8 +5,8 @@
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{algorithmic}
 \usepackage{graphicx}
-\usepackage{textcompthe_annotated_transformer}
 \usepackage{xcolor}
+\usepackage[english,ngerman]{babel}
 \usepackage[backend=biber,
             sorting=none,   % Keine Sortierung
             doi=true,       % DOI anzeigen
@@ -21,7 +21,7 @@
     T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \begin{document}
 
-\title{Transformer gibt es nicht nur im Kino}
+\title{Transformer und Multi-Head Attention}
 
 
 \author{\IEEEauthorblockN{Jonathan Arns}
@@ -37,34 +37,33 @@ jonathan.arns@stud.hs-mannheim.de}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Document beginning %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \begin{abstract}
-abstract
+Natural Language Processing ist ein wichtiger Anwendungbereich für Machine Learning, der von deep neural networks dominiert ist. Der Transformer wurde 2017 als neue deep learning Architektur für genau diesen Bereich vorgestellt und seitdem erfolgreich in mehreren sehr großen Sprach-Modellen wie GPT-2 und BERT verwendet. Dieser Artikel stellt die Transformer Architektur dar und veranschaulicht im Detail den Attention Mechanismus, der dem Transformer zu Grunde liegt.
 \end{abstract}
 
 
 \section{Einleitung}
-Natural Language Processing (NLP), die Verarbeitung Menschlicher Sprache, ist ein Anwendungbereich für Machine Learning, der bereits erheblich von deep neural networks (DNN) profitiert hat. Die zwei dominanten Arten von DNN Architekturen dabei waren lange Zeit recurrent neural networks (RNN) und convolutional neural networks (CNN). \cite{comparative_study_cnn_rnn}
+Natural Language Processing (NLP), die Verarbeitung menschlicher Sprache, hat bereits erheblich von deep neural networks (DNN) profitiert. Die zwei dominanten Arten von DNN Architekturen dabei waren lange Zeit recurrent neural networks (RNN) und convolutional neural networks (CNN). \cite{comparative_study_cnn_rnn}
 
-2017 stellten Vaswani et al. \cite{attention_is_all_you_need} mit dem Transformer eine neue DNN Architektur vor, die seitdem unter Anderem große Aufmerksamkeit durch die erfolgreiche Verwendung in OpenAIs GPT-2 und GPT-3 Modellen erlangte.
+2017 stellten Vaswani et al. \cite{attention_is_all_you_need} mit dem Transformer eine neue DNN Architektur vor, die seitdem unter Anderem große Aufmerksamkeit durch die erfolgreiche Verwendung in OpenAIs GPT Modellen \cite{gpt_1} erlangte.
+
+Dieser Artikel erklärt die Transformer Architektur auf anschauliche Art und Weise. Dazu wird zunächst das Konzept von Sequence to Sequence Learning zusammengefasst, welches der Transformer aufgreift. Bevor die vollständige Modell Architektur dargestellt wird, liegt ein besonderer Fokus auf Attention, dem zentralen Mechanismus des Transformers. Diese wird auf ihre Bestandteile heruntergebrochen und von Grund auf erklärt und visualisiert.
 
 \section{Sequence to Sequence Learning}
-Traditionell waren DNNs trotz ihrer hohen Flexibilität und Effektivität für viele Aufgaben beschränkt auf Probleme, deren Eingaben und Ausgaben sich sinvoll in Vektoren mit fester Länge codieren lassen, da neuronale Netze generell eine feste Anzahl an Eingabe- und Ausgabeneuronen haben. Das ist zwar für viele Klassifizierungsprobleme und in der Bildverarbeitung kein Problem, sehr wohl aber für beispielsweise NLP, da die Länge von Texten im Vorfeld nicht immer bekannt ist. \cite{sequence_to_sequence}
+Traditionell waren DNNs trotz ihrer hohen Flexibilität und Effektivität für viele Aufgaben beschränkt auf Probleme, deren Eingaben und Ausgaben sich sinvoll in Vektoren mit fester Länge codieren lassen, da neuronale Netze generell eine feste Anzahl an Eingabe- und Ausgabeneuronen haben. Das ist zwar für viele Klassifizierungsprobleme und in der Bildverarbeitung kein Problem, sehr wohl aber für beispielsweise NLP, da die Länge von Texten im Vorfeld nicht immer bekannt ist. Dieses Problem wird mittels Sequence to Sequence (Seq2Seq) Learning gelöst, mit dessen Hilfe beliebig lange Sequenzen von Elementen als Eingabe in vollkommen andere Sequenzen, anderer Länge und aus anderen Elementen, transformiert werden können. \cite{sequence_to_sequence}
 
-Dieses Problem wird mittels Sequence to Sequence (Seq2Seq) Learning gelöst, mit dessen Hilfe beliebig lange Sequenzen von Elementen als Eingabe in vollkommen andere Sequenzen, anderer Länge und aus anderen Elementen, transformiert werden können. \cite{sequence_to_sequence}
-
-Die meisten Seq2Seq Modelle bestehen aus einem Encoder und einem Decoder \cite{attention_is_all_you_need}. Der Encoder codiert die Eingabe Sequenz in einer höher-dimensionale Vektorrepräsentation, die dann vom Decoder in eine Ausgabe Sequenz umgewandelt wird. Die Encoder und Decoder selbst sind in der Regel RNNs, beispielsweise mit der LSTM Architektur.
-
+Die meisten Seq2Seq Modelle bestehen aus einem Encoder und einem Decoder \cite{attention_is_all_you_need}. Der Encoder codiert die Eingabe Sequenz in einer höher-dimensionale Vektorrepräsentation, die dann vom Decoder in eine Ausgabe-Sequenz umgewandelt wird. Die Encoder und Decoder selbst sind in der Regel RNNs, beispielsweise mit der LSTM Architektur.
 
 
 \section{Attention}
-Attention ist der wichtigste Mechanismus des Transformers. Attention erlaubt dem Transformer beispielsweise, Sätze nicht nur Wort für Wort zu übersetzen, sondern Zusammenhänge zu erkennen und grammatikalisch korrekte Sätze zu bilden. Abstrakt ist eine Attention Funktion eine Abbildung von einer Query und einer Menge von Key-Value Paaren zu einer Ausgabe. In einem Übersetzungskontext könnte das Wort, welches gerade übersetzt werden soll, die Query sein und alle Wörter in dem zu übersetzenden Satz die Keys und Values. Das Ergebnis signalisiert dann, welche Wörter bei der Übersetzung der Query zusätzlich besonders in betracht gezogen werden. Diese spezielle Konstellation, in der die Query, Keys und Values aus der gleichen Sequenz stammen, nennt sich Self-Attention. Diese kommt auch im Transformer zum Einsatz und ist beispielhaft in Abb. \ref{fig:4} visualisiert.
+Attention ist der wichtigste Mechanismus des Transformers. Attention erlaubt dem Transformer beispielsweise, Sätze nicht nur Wort für Wort zu übersetzen, sondern Zusammenhänge zu erkennen und grammatikalisch korrekte Sätze zu bilden. Abstrakt ist eine Attention Funktion eine Abbildung von einer Query und einer Menge von Key-Value Paaren zu einer Ausgabe. In einem Übersetzungskontext könnte das Wort, welches gerade übersetzt werden soll, die Query sein und alle Wörter in dem zu übersetzenden Satz die Keys und Values. Das Ergebnis signalisiert dann, welche Wörter bei der Übersetzung der Query zusätzlich besonders in Betracht gezogen werden. Diese spezielle Konstellation, in der die Query, Keys und Values aus der gleichen Sequenz stammen, nennt sich Self-Attention. Diese kommt auch im Transformer zum Einsatz und ist beispielhaft in Abbildung \ref{fig:4} visualisiert.
 \begin{figure}[htbp]
-\centerline{\includegraphics{img/attention_visualized.png}}
+\centerline{\includegraphics[height=6cm]{img/attention_visualized.png}}
 \caption{Visualisierung von Self-Attention in GPT-2. Verbindungen von der Query (grau hinterlegt) zu den Keys zeigen Attention, dunklere Verbindungen sind höher gewichtet. Hier ist sichtbar, wie mittels Attention Referenzen auf frühere Wörter erkannt werden können. \cite{visualization_of_attention}}
 \label{fig:4}
 \end{figure}
 
-\subsection{Scaled dotproduct attention}
-Es gibt grundlegend zwei verschiedene Attention Funktionen, additive Attention und dot-product Attention. Der Transformer verwendet dot-product Attention, da diese trotz gleicher theoretischer Komplexität in der Praxis aufgrund von hoch optimiertem Matix-Multiplikations Code deutlich schneller ist. Abb. \ref{fig:2} zeigt den Aufbau eines scaled dot-product attention Moduls im Transformer. Die Berechnung der Attention Matrix erfolgt mit folgender Formel:
+\subsection{Scaled Dotproduct Attention}
+Es gibt grundlegend zwei verschiedene Attention Funktionen, additive Attention und dotproduct Attention. Der Transformer verwendet dotproduct Attention, da diese trotz gleicher theoretischer Komplexität in der Praxis aufgrund von hoch optimiertem Matizenmultiplikations-Code deutlich schneller ist. Abbildung \ref{fig:2} zeigt den Aufbau eines scaled dotproduct Attention Moduls im Transformer. Die Berechnung der Attention Matrix erfolgt mit folgender Formel:
 \begin{equation} \label{eq:attention}
     Attention(Q,K,V) = softmax(\frac{QK^T}{\sqrt{d_K}})V
 \end{equation}
@@ -78,25 +77,20 @@ Da die Softmax Funktion in der Praxis nicht gut mit sehr großen Werten skaliert
 
 \begin{figure}[htbp]
 \centerline{\includegraphics{img/scaled_dotproduct_attention.png}}
-\caption{Für die Berechnung der Scaled Dotproduct-Attention werden die Matrizen $Q$, $K$ und $V$ benötigt. Die Queries $Q$ und die Keys $K$ haben die Dimension $d_k$, die Values $V$ haben die Dimension $d_v$. Um die Attention zu berechnen, wird mittels Matrixmultiplikation der Queries mit den transponierten Keys pro Query Vektor ein Score für jeden Key gebildet. Diese Scores werden mit $\sqrt{d_k}$ skaliert und mit einer Softmax Funktion pro Query zu Gewichten für die Values normalisiert. Um die Attention Matrix zu erhalten werden die Values mit den ermittelten Gewichten multipliziert. Vor der Berechnung der Softmax Funktion werden optional Werte maskiert, die noch unerlaubte Verbindungen darstellen. Zu maskierende Werte werden auf $-\infty$ gesetzt. \cite{attention_is_all_you_need}}
+\caption{Für die Berechnung der scaled dotproduct Attention werden die Matrizen $Q$, $K$ und $V$ benötigt. Die Queries $Q$ und die Keys $K$ haben die Dimension $d_k$, die Values $V$ haben die Dimension $d_v$. Um die Attention zu berechnen, wird mittels Matrixmultiplikation der Queries mit den transponierten Keys pro Query Vektor ein Score für jeden Key gebildet. Diese Scores werden mit $\sqrt{d_k}$ skaliert und mit einer Softmax Funktion pro Query zu Gewichten für die Values normalisiert. Um die Attention Matrix zu erhalten werden die Values mit den ermittelten Gewichten multipliziert. Vor der Berechnung der Softmax Funktion werden optional Werte maskiert, die noch unerlaubte Verbindungen darstellen. Zu maskierende Werte werden auf $-\infty$ gesetzt. \cite{attention_is_all_you_need}}
 \label{fig:2}
 \end{figure}
 
-% Sei die Eingabe eine Sequenz aus zwei Elementen, die in den Vektoren $x_1$ und $x_2$ ... codiert sind.
-% Jeder Eingabe Vektor wird mit den Matrizen $W^Q$, $W^K$ und $W^V$ multipliziert, um die Query-Vektoren $q_1$ und $q_2$, die Key-Vektoren $k_1$ und $k_2$ und die Value-Vektoren $v_1$ und $v_2$ zu erzeugen. $W^Q$, $W^K$ und $W^V$ sind Gewicht-Matrizen, die zufällig initialisiert und beim Training des Modells erlernt werden.
-% Im zweiten Schritt wird für jedes Element pro Query ein Score berechnet. Dazu wird jeweils das Skalarprodukt des Query-Vektors mit dem einzelnen Key-Vektor berechnet. Die Scores werden Skaliert, indem sie durch die Quadratwurzel der Dimension der Key-Vektoren $\sqrt{d_k}$ dividiert werden. Diese Skalierung wird verwendet, um die Performance der nachfolgenden Softmax Funktion bei sehr großen Eingaben zu verbessern. Aus den skalierten Scores werden mit der Softmax Funktion Gewichte für die Value-Vektoren berechnet. Softmax normalisiert die Eingaben auf Werte zwischen $0$ und $1$ so, dass ihre Summe $1$ ergibt. Die Value-Vektoren werden mit den berechneten Gewichten multipliziert, um das Ergebnis der Attention Funktion zu erhalten.
-
-
 \subsection{Single-Head Attention}
-Bei der Definition der dot-product Attention bis hier her fehlt noch ein essentieller Teil des Attention Mechanismus. Es fehlt jede Art von Parametern, die beim Training des Modells erlernt werden und die den Eingaben eine Gewichtung verleihen. Die Matrizen $Q$, $K$ und $V$, die die Attention Funktion als Eingaben erwartet, sind nicht einfach eine direkte Repräsentation der Eingaben des Modells, sondern gewichtete Projektionen von diesen, die zur Berechnung der Attention gebildet werden. Hierzu werden die Parameter Matrizen $W^Q$, $W^K$ und $W^V$ benötigt, mit denen die Eingaben einer Attention Schicht multipliziert werden. $W^Q$, $W^K$ und $W^V$ werden zufällig initialisiert und beim Training des Modells erlernt. In einem Single-Head Attention Modul haben die Projektionen die Dimension $d_{model}$, die der Dimension der codierten Eingaben des Modells entspricht. \cite{attention_is_all_you_need}
+Bei der Definition der dotproduct Attention bis hier her fehlt noch ein essentieller Teil des Attention Mechanismus. Es fehlt jede Art von Parametern, die beim Training des Modells erlernt werden und die den Eingaben eine Gewichtung verleihen. Die Matrizen $Q$, $K$ und $V$, die die Attention Funktion als Eingaben erwartet, sind nicht einfach eine direkte Repräsentation der Eingaben des Modells, sondern gewichtete Projektionen von diesen, die zur Berechnung der Attention gebildet werden. Hierzu werden die Parameter Matrizen $W^Q$, $W^K$ und $W^V$ benötigt, mit denen die Eingaben einer Attention Schicht multipliziert werden. $W^Q$, $W^K$ und $W^V$ werden zufällig initialisiert und beim Training des Modells erlernt. In einem Single-Head Attention Modul haben die Projektionen die Dimension $d_{model}$, die der Dimension der codierten Eingaben des Modells entspricht. \cite{attention_is_all_you_need}
 
 \subsection{Multi-Head Attention}
 \begin{figure}[htbp]
 \centerline{\includegraphics{img/multi_head_attention.png}}
-\caption{Multi-Head Attention \cite{attention_is_all_you_need}}
+\caption{Für Multi-Head Attention werden die Eingaben $h$ mal linear projeziert. Auf den Projektionen wird jeweils die scaled dotproduct Attention berechnet. Die Ergebnisse werden concatiniert und linear in eine $d_{model}$-dimensionale Ausgabe projeziert. \cite{attention_is_all_you_need}}
 \label{fig:3}
 \end{figure}
-Der Transformer verwendet anstatt Single-Head Attention Multi-Head Attention. Der Unterschied besteht darin, dass es mehrere Parameter Matrizen $W_1^Q$ ... $W_h^Q$, $W_1^K$ ... $W_h^K$ und $W_1^V$ ... $W_h^V$ gibt, mit denen die Eingaben linear projeziert werden. So werden $h$ so genannte Attention Heads gebildet. Die Projektionen haben anstatt $d_{model}$ die Dimensionen $d_k$, $d_k$ und $d_v$, wobei $d_k$ und $d_v$ kleiner sein können, als $d_{model}$. Für jede Projektion wird dann einzeln die Attention berechnet, die Ergebnisse werden concatiniert und mit einer weiteren Parameter Matrix $W^O$ in die $d_{model}$-dimensionale Ausgabe des Multi-Head Attention Moduls projeziert. Dieser Aufbau ist in Abb. \ref{fig:3} dargestellt und entspricht der Formel:
+Der Transformer verwendet anstatt Single-Head Attention Multi-Head Attention. Der Unterschied besteht darin, dass es mehrere Parameter Matrizen $W_1^Q$ ... $W_h^Q$, $W_1^K$ ... $W_h^K$ und $W_1^V$ ... $W_h^V$ gibt, mit denen die Eingaben linear projeziert werden. So werden $h$ so genannte Attention Heads gebildet. Die Projektionen haben anstatt $d_{model}$ die Dimensionen $d_k$, $d_k$ und $d_v$, wobei $d_k$ und $d_v$ kleiner sein können, als $d_{model}$. Für jede Projektion wird dann einzeln die Attention berechnet, die Ergebnisse werden concatiniert und mit einer weiteren Parameter Matrix $W^O$ in die $d_{model}$-dimensionale Ausgabe des Multi-Head Attention Moduls projeziert. Dieser Aufbau ist in Abbildung \ref{fig:3} dargestellt und entspricht der Formel:
 \begin{eqnarray} \label{eq:multi_head_attention}
     MultiHead(Q,K,V) = Concat(head_1,...,head_h)W^O \\
     \text{mit} \; head_i = Attention(QW_i^Q , KW_i^K , VW_i^V)
@@ -105,18 +99,41 @@ Wobei die Projektionen mit $W_i^Q \in \mathbb{R}^{d_{model} \times d_k}$, $W_i^K
 
 Yin et al. \cite{attention_is_all_you_need} verwenden in ihrem Modell $h = 8$ und $d_k = d_v = \frac{d_{model}}{h}$, somit haben sie 8 kleinere Attention Heads bei ähnlichem Rechenaufwand im Vergleich zu einem $d_{model}$-dimensionalen Single-Head Attention Modul.
 
-\subsection{Attention Beispiel}
-% TODO
+\subsection{Multi-Head Attention Visualisierung}
+In den Abbildungen \ref{vis:1}, \ref{vis:2}, \ref{vis:3}, \ref{vis:4} wird die Funktionsweise eines Multi-Head Self-Attention Moduls visualisiert dargestellt, um die Transformation der verschiedenen Matrizen zu veranschaulichen. 
+
+\begin{figure}[htbp]
+\centerline{\includegraphics{img/vis1.png}}
+\caption{Sei die Eingabe eine Sequenz aus zwei Elementen, die in den Vektoren $x_1$ und $x_2$ mit je $d_{model}$ Dimensionen codiert sind. Die Vektoren bilden zusammen die Matrix $X$, die als Eingabe für das Multi-Head Self-Attention Modul verwendet wird. (Abbildung nach \cite{illustrated_transformer})}
+\label{vis:1}
+\end{figure}
+
+\begin{figure}[htbp]
+\includegraphics[width=\linewidth]{img/vis2.png}
+\caption{Da es sich um Multi-Head Attention handelt, wird $X$ mit den Parameter Matrizen $W^Q_1 ... W^V_h$ in $h$ (Anzahl Heads) verschiedene Query, Key und Value Matrizen projeziert. Jede Matrix $Q_i$ beinhaltet in diesem Fall zwei Queries. (Abbildung nach \cite{illustrated_transformer})}
+\label{vis:2}
+\end{figure}
+
+\begin{figure}[htbp]
+\includegraphics[width=\linewidth]{img/vis3.png}
+\caption{Für jeden Attention Head wird die scaled dotproduct Attention berechnet, das Ergebnis ist eine Matrix $Z_i$, die pro Query in $Q_i$ einen Attention Vektor enthält. (Abbildung nach \cite{illustrated_transformer})}
+\label{vis:3}
+\end{figure}
+
+\begin{figure}[htbp]
+\includegraphics[width=\linewidth]{img/vis4.png}
+\caption{Um die Ergebnisse der Einzelnen Attention Heads zusammen zu führen, werden die Matrizen $Z_1$ bis $Z_h$ concatiniert und mit der trainierten Parametermatrix $W^O$ multipliziert. Das Ergebnis ist eine Matrix $Z$, die die Informationen aus allen Attention Heads kombiniert und as Ausgabe des Multi-Head Attention Moduls dient. (Abbildung nach \cite{illustrated_transformer})}
+\label{vis:4}
+\end{figure}
 
 
 \section{Modell Architektur}
-Fig. \ref{fig:1} zeigt die Architektur des Transformers. Der Transformer ist auto-regressiv, das bedeutet, dass jedes generierte Element der Ausgabe Sequenz ebenfalls als Eingabe Verwendet wird, um das nächste Element zu generieren \cite{attention_is_all_you_need}. Um eine vollständige Ausgabe zu erzeugen muss der Transformer also mehrfach ausgeführt werden.
-% Im Folgenden wird weiter auf die wichtigsten Bestandteile der Transformer Architektur eingegangen.
+Abbildung \ref{fig:1} zeigt die Architektur des Transformers. Der Transformer ist auto-regressiv, das bedeutet, dass jedes generierte Element der Ausgabe Sequenz ebenfalls als Eingabe Verwendet wird, um das nächste Element zu generieren \cite{attention_is_all_you_need}. Um eine vollständige Ausgabe zu erzeugen muss der Transformer also mehrfach ausgeführt werden.
 \begin{figure}[htbp]
 \centerline{\includegraphics{img/figure1.png}}
-\caption{Der Encoder (links) besteht aus einer Reihe von N identischen Schichten mit jeweils zwei Unterschichten. Die Eingaben einer Encoder Schicht fließen zuerst durch eine self-attention Schicht und dann durch ein feed-forward Netz. \\
-Der Decoder (rechts) besteht auch aus einer Reihe von N identischen Schichten, jedoch mit jeweils drei Unterschichten. Die erste ist ebenfalls eine self-attention Schicht, deren Eingaben allerdings maskiert werden, um dem Modell keine Eingaben zu zeigen, die es nicht sehen sollte. Danach kommt eine Encoder-Decoder attention Schicht, die als Keys und Values die Ausgaben des Decoders und als Queries die Ausgaben der zuvor liegenden self-attention Schicht erhält. Zuletzt liegt wie beim Encoder ein feed-forward Netz. \\
-Nach jeder Attention und feed-forward Schicht wird die Summe dessen Ausgaben und Eingaben zusammen normalisiert. Die normalisierten Werte dienen jeweils als Eingabe für die nächste Schicht. \\
+\caption{Der Encoder (links) besteht aus einer Reihe von N identischen Schichten mit jeweils zwei Unterschichten. Die Eingaben einer Encoder Schicht fließen zuerst durch eine self-Attention Schicht und dann durch ein feedforward Netz. \\
+Der Decoder (rechts) besteht auch aus einer Reihe von N identischen Schichten, jedoch mit jeweils drei Unterschichten. Die erste ist ebenfalls eine Self-Attention Schicht, deren Eingaben allerdings maskiert werden, um dem Modell keine Eingaben zu zeigen, die es nicht sehen sollte. Danach kommt eine Encoder-Decoder Attention Schicht, die als Keys und Values die Ausgaben des Decoders und als Queries die Ausgaben der zuvor liegenden Self-Attention Schicht erhält. Zuletzt liegt wie beim Encoder ein feedforward Netz. \\
+Nach jeder Attention und feedforward Schicht wird die Summe dessen Ausgaben und Eingaben zusammen normalisiert. Die normalisierten Werte dienen jeweils als Eingabe für die nächste Schicht. \\
 Im NLP Anwendungen müssen die Eingaben für das Modell als erstes in Vektoren eingebettet werden. Da in Seq2Seq Modellen die Reihenfolge der Eingaben eine Rolle spielt, das Modell die Eingaben aber alle gemeinsam erhält, muss außerdem für jedes Element die Position in der Eingabe codiert werden. Der Transformer generiert für jedes Element einen Vektor, der dessen Position codiert, dazu stehen verschiedene Algorithmen, sowohl fix, als auch trainierbar, zur Verfügung. \\
 Um ein Ergebnis zu erhalten, werden die Ausgaben des Decoders in einen Logit-Vektor transformiert und mit der Softmax Funktion normalisiert. Der erzeugte Vektor enthält für jedes Element des Ausgabealphabets die Wahrscheinlichkeit, dass es das nächste Element in der Ausgabe Sequenz ist. \cite{attention_is_all_you_need}}
 \label{fig:1}
@@ -131,16 +148,34 @@ Durch die Self-Attention Schichten im Decoder können für jedes Element im Deco
 \subsubsection{Encoder-Decoder Attention}
 Die Keys und Values der Encoder-Decoder Attention Schichten im Decoder sind die Ausgaben des Encoders. Als Queries werden jeweils die Ausgaben der zuvor liegenden Self-Attention Schicht im Decoder verwendet. Damit können Abhängigkeiten von jedem Element im Decoder zu jedem Element der Encoder Ausgabe dargestellt werden. Hier besteht also die Schnittstelle vom Encoder zum Decoder und entsprechend die Beziehung zwischen den Eingabe und Ausgabe Sequenzen.
 
-\subsection{Feed-Forward Netze}
+\subsection{Feedforward Netze}
+Das feedforward Netz (FFN) in jeder Encoder und Decoder Schicht besteht aus Eingabe- und Ausgabeschichten mit $d_{model} = 512$ Dimensionen und einer verdeckten Schicht mit $d_{ff} = 2048$ Dimensionen. Auf den Ausgaben der ersten Schicht wird die ReLU Aktivierungsfunktion angewendet, bevor diese in die verdeckte Schicht fließen. ReLU ist $0$ für negative Werte und gibt die Eingabe für positive Werte unverändert zurück, das entspricht der Formel $ReLU(x) = max(0, x)$ \cite{activation_functions}. Somit bilden die feedforward Netze folgende lineare Transformation ab:
+\begin{equation} \label{eq:ffn}
+    FFN(x) = max(0,xW_1 + b_1)W_2 + b_2
+\end{equation}
+Wobei $W_i$ die erlernten Gewichte und $b_i$ die erlernten Werte zur neuronen-spezifischen Verzerrung sind. Diese Transformation wird auf allen Eingabe-Elementen der FFN Schicht identisch und unabhängig voneinander durchgeführt und kann somit problemslos parallelisiert werden. Die einzelnen FFN Schichten haben allerdings ihre eigenen Gewichte und Verzerrungen. \cite{attention_is_all_you_need}
 
 
 \section{Training}
-Die Modell Parameter werden zufällig initialisiert.
+Transformer können wie andere neuronale Netze auch mit unterschiedlichen Optimierungsfunktionen trainiert werden. Vaswani et al. \cite{attention_is_all_you_need} verwenden für ihren originalen Transformer die Adam Optimierungsfunktion, während OpenAIs GPT Modelle mit Stochastic Gradient Descent trainiert wurden \cite{gpt_1}.
+
+Als Trainingsdaten werden Paare von Sequenzen benötigt, die jeweils eine gewünschte Transformation darstellen, beispielsweise Englische Sätze und die Deutschen Sätze, zu denen die Englischen Sätze übersetzt werden sollen. Da der Transformer seine eigenen Ausgaben als weitere Eingaben erwartet, um jeweils das nächste Element zu generieren, gibt es pro Sequenz-Paar mehrere Trainingsschritte, in denen der Transformer jeweils zusätzlich das nächste Element der erwarteten Ausgabe in der Decoder Eingabe erhält. Für jeden Trainingsschritt erhält der Transformer die komplette Eingabe Sequenz als Eingabe für den Encoder und für den Decoder die erwartete Ausgabe um ein Element nach rechts verschoben, damit die Eingabe das erwartete Element noch nicht enthält. Hat die erwartete Ausgabe Sequenz nur ein Element, erhält der Decoder nur ein Symbol, welches den Anfang einer Sequenz signalisiert.
+
+
+\section{Verwendung}
+Ähnlich wie im Training sind bei der Verwendung des Transformers mehrere Durchläufe notwendig, um eine vollständige Sequenz zu generieren. Mit jedem Schritt erhält der Transformer seine eigene Ausgabe als Eingabe für den Decoder, um das nächste Element zu generieren. Zusätzlich wird nicht einfach in jedem Schritt das Element mit der höchsten Vorhersage-Wahrscheinlichkeit in der Ausgabe der letzten Softmax Schicht ausgegeben. Stattdessen verwendet der Transformer Beam Search \cite{attention_is_all_you_need}, um mehrere mögliche Elemente zu behalten und erst später das beste auszuwählen.
+
+Beam Search speichert jederzeit die besten $n$ von $m$ Sequenzen, verwirft die schlechtesten $m-n$ Sequenzen und sucht in der aktuell besten Sequenz weiter \cite{beam_search}. Zur Bewertung der Sequenzen wird im Transformer die Summe der Kostenfunktion aller Elemente verwendet. Vaswani et al. \cite{attention_is_all_you_need} verwenden für ihr Modell eine Beam Breite von $n = 4$. Mittels Beam Search können auch mehrere vollständige Ausgabe Sequenzen gefunden werden, somit können beispielsweise Übersetzungsmodelle mehrere mögliche Übersetzungen für einen Text generieren.
+
+
+\section{Ausblick}
+Die Transformer Architektur, wie sie ursprünglich entwickelt und in diesem Artikel vorgestellt wurde, verwendet einen Encoder und einen Decoder, die beide jeweils aus einer Reihe von identisch aufgebauten Schichten bestehen. Transformer wurden seitdem für verschiedene andere Probleme verwendet. Dafür wurden neue, Transformer-basierte Architekturen entwickelt, die nur noch einen Stapel von Decoder oder Encoder Modulen verwenden und ohne das Gegenstück auskommen. OpenAIs GPT Modelle verwenden beispielsweise nur eine Reihe von Decoder Modulen, anstelle der zweigeteilten Architektur \cite{gpt_1}.
 
 
 \section{Fazit}
-Das ist ein Fazit
+Die größte Innovation des Transformers war die Verwendung von Self-Attention als Ersatz für komplexere rekurrente Schichten. Die Vorteile sind bessere Performance, geringerer Rechenaufwand beim Training des Modells und möglicherweise besser nachvollziehbare Ergebnisse. \cite{attention_is_all_you_need}
 
+Angesichts der mächtigen neuen Sprach-Modelle wie GPT-2 \cite{gpt_2} und BERT \cite{bert}, die seit der Vorstellung des Transformers auf dessen Basis entstanden sind, lässt sich von einer kleinen Revolution der NLP Domäne sprechen. Heute ermöglichen solche vortrainierten, generellen Sprach-Modelle, mit geringem Aufwand und kleinen Datensätzen, mittels Fine-Tuning eines der genannten Modelle, kompetente NLP Systeme für eine breite Menge von Aufgaben zu schaffen. \cite{pretrained_models}
 
 
 \printbibliography
